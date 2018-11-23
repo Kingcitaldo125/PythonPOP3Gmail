@@ -5,16 +5,17 @@ import time
 from datetime import date
 
 path = "C:\\Users\\paula\\Desktop\\emailDump\\"
+passwordFilename = "emailPassword.txt"
 
 # Uses Gmail
 class EmailFetcher(object):
 	def __init__(self):
-		global path
+		global path,passwordFilename
 		self.path = path
 		
 		self.user = "paularelt@gmail.com"
 		self.password = ""
-		with open("emailPassword.txt", "r") as f:
+		with open(passwordFilename, "r") as f:
 			self.password = f.read()
 		
 		self.Mobj = poplib.POP3_SSL('pop.googlemail.com','995')
