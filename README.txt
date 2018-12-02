@@ -8,4 +8,6 @@ As of 11/2018, there is no functionality to do this(coming soon).
 Follow the instructions in the module to download your emails to an email folder.
 The default path is set to my machine's desktop with a folder - set this path to whatever folder you wish on yours.
 
+Please edit the new "dumpPath" text file to whatever directory you wish to dump emails to. This path should reflect and empty folder on your pc.
+
 You may also want to add a password filename to the main directory that will contain your app password, or whatever you choose to access your inbox.

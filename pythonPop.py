@@ -4,7 +4,11 @@ import os
 import time
 from datetime import date
 
-path = "C:\\Users\\paula\\Desktop\\emailDump\\"
+path = ""
+with open("dumpPath.txt", "r") as f:
+	path = f.read()
+
+print("Using email path:", path)
 passwordFilename = "emailPassword.txt"
 
 # Uses Gmail
@@ -127,6 +131,7 @@ class EmailMenu(object):
 	def displayEmails(self):
 		print("-----------------------------------")
 		print("-----------------------------------")
+		print("Reading from",self.path)
 		for p,d,files in os.walk(self.path):
 			for f in files:
 				print(str(f))
