@@ -27,42 +27,53 @@ class EmailFetcher(object):
 		self.Mobj.pass_(self.password)
 		
 		self.numMessages = len(self.Mobj.list()[1])
-
-	def convertToMessageObject(self, text, file):
-		d=0
 		
-	def retrieveEmails(self,date):
+	def getMessageTextFromMIME(self, mText):
+		messageParams=[]
+
+		# Date is like: Date: Sun, 2 Dec 2018 19:30:06 +0000 (UTC)
+		dateM = re.search(r"\b([dD]ate:\s+.+\d{2}:\d{2}:\d{2})\s+.+\b", mText, re.I|re.M)
+		fromM = re.search(r"\b([fF]rom:\s+.+)\b", mText, re.I|re.M)
+		toM = re.search(r"\b([tT][oO]:\s+.+[@].+[.][cC][oO][mM])", mText, re.I|re.M)
+		subM = re.search(r"\b([sS]ubject:\s+.+)\b", mText, re.I|re.M)
+		
+		if dateM:
+			messageParams.append(dateM.group(1))
+		if fromM:
+			messageParams.append("From: "+fromM.group(1))
+		if toM:
+			messageParams.append(toM.group(1))
+		if subM:
+			messageParams.append(subM.group(1))
+
+		return messageParams
+		
+	def retrieveEmails(self):
+		allMessageParams = []
 		for i in range(self.numMessages):
+			fileBuffer = ""
 			filename = self.path+"Message"+str(i+1)+".txt"
 			print("Opening '{0}'".format(filename))
 			with open(filename, 'w') as f:
 				try:
 					for j in self.Mobj.retr(i+1)[1]:
 						decoded = str(j.decode("utf-8"))
+						
+						fileBuffer+=decoded
+						fileBuffer+=" \n"
+						
 						f.write(decoded)
 						f.write('\n')
 				except:
 					f.write('\n')
 					continue
-		print("Retrieving Complete!\n")
-
-	def clearEmailDirectory(self):
-		for p,d,files in os.walk(self.path):
-			for f in files:
-				os.remove(self.path+str(f))
-		print("Clearing Complete!\n")
 			
-	def deleteEmail(self,emailNumber):
-		for p,d,files in os.walk(self.path):
-			for f in files:
-				M = re.match(r"[mM]essage(\d+)[.][tT][xX][tT]", f, re.M|re.I)
-				if M:
-					if M.group(1) == emailNumber:
-						print("Deleting file",M.group(1))
-						os.remove(self.path+M.group(0))
-						print("Deleted")
-						return 0
-		return -1
+			#print("FileBuffer:",fileBuffer)
+			mParams = self.getMessageTextFromMIME(fileBuffer)
+			allMessageParams.append(mParams)
+			
+		#print("Retrieving Complete!\n")
+		return allMessageParams
 
 	def quit(self):
 		self.Mobj.quit()
@@ -70,81 +81,19 @@ class EmailFetcher(object):
 		time.sleep(2)
 
 
-# Date Format:
-# Fri, 28 Sep 2012 21:47:37 -0700 (PDT)
 class EmailMenu(object):
 	def __init__(self, emFetch):
-		self.exitCode = 6
 		self.emailFetcher = emFetch
-		self.path = self.emailFetcher.path #inherit path from writer/reader
-		self.todaysDate = date.today()
-		
-		self.day = str(self.todaysDate.strftime("%d"))
-		self.month = str(self.todaysDate.strftime("%m"))
-		self.year = str(self.todaysDate.strftime("%Y"))
-		
-		print("{0} - Starting EmailMenu".format(str(self.todaysDate)))
-		
-	def run(self):
-		inputSelection = -1
+			
+	def run(self,timeout=0):
 		while 1:
-			self.displayChoices()
-			try:
-				inputSelection = int(input())
-			except:
-				break
-			if inputSelection == self.exitCode:
-				break
-			elif inputSelection == 1:
-				self.emailFetcher.retrieveEmails(self.year)
-			elif inputSelection == 2:
-				self.displayEmails()
-			elif inputSelection == 3:
-				self.emailFetcher.clearEmailDirectory()
-			elif inputSelection == 4:
-				self.chooseDeleteDisplay()
-				numb = str(input())
-				print("Deleting {0}".format(numb))
-				if self.emailFetcher.deleteEmail(numb) != 0:
-					print("Could not find email to be deleted")
-					continue
-			elif inputSelection == 5:
-				os.system("cls")
-			else:
-				print("Invalid Selection.")
-				continue
+			for ii in self.emailFetcher.retrieveEmails():
+				for jj in ii:
+					print(jj)
+				print("----------------\n")
+			time.sleep(timeout)
+			
 		self.emailFetcher.quit()
 
-	def displayChoices(self):
-		print("-----------------------------------")
-		print("-----------------------------------")
-		print("Choose An Option Below:")
-		print("1. Retrieve Emails")
-		print("2. Display Emails in email folder")
-		print("3. Clear Emails(this will delete all emails in the email folder!!!)")
-		print("4. Delete Email(choose email number)")
-		print("5. Clear Terminal")
-		print("6. Exit")
-		print("-----------------------------------")
-		print("-----------------------------------\n")
-		
-	def displayEmails(self):
-		print("-----------------------------------")
-		print("-----------------------------------")
-		print("Reading from",self.path)
-		for p,d,files in os.walk(self.path):
-			for f in files:
-				print(str(f))
-		print("-----------------------------------")
-		print("-----------------------------------\n")
-		
-	def chooseDeleteDisplay(self):
-		print("-----------------------------------")
-		print("-----------------------------------")
-		print("Enter the Number of the email you want to delete:")
-		print("-----------------------------------")
-		print("-----------------------------------\n")
-
-
 emenu = EmailMenu(EmailFetcher())
-emenu.run()
+emenu.run(5)
